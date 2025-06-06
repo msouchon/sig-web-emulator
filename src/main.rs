@@ -1,18 +1,27 @@
+use std::sync::Arc;
 use axum::{
-    extract::Path,
+    extract::{Path, State},
     http::StatusCode,
     Router,
     routing::{get, post},
 };
+use tokio::sync::RwLock;
 use tower_http::{
     cors::{Any, CorsLayer},
     trace::{self, TraceLayer},
 };
 use tracing::Level;
 
+#[derive(Default)]
+struct Tablet {
+    state: bool,
+}
+
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
+
+    let tablet = Arc::new(RwLock::new(Tablet::default()));
 
     let app = Router::new()
         .route("/", get(|| async {"Hello, world!"}))
@@ -25,6 +34,7 @@ async fn main() {
         .route("/SigWeb/TabletState", get(get_tablet_state))
         .route("/SigWeb/TabletState/{value}", post(set_tablet_state))
         .route("/SigWeb/TotalPoints", get(get_total_points))
+        .with_state(tablet)
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
@@ -39,12 +49,14 @@ async fn main() {
     axum::serve(listener, app).await.unwrap()
 }
 
-async fn get_tablet_state() -> &'static str {
-    let tablet_state = false;
-    if tablet_state {"1"} else {"0"}
+async fn get_tablet_state(State(state): State<Arc<RwLock<Tablet>>>) -> &'static str {
+    let tablet = state.read().await;
+    if tablet.state {"1"} else {"0"}
 }
 
-async fn set_tablet_state(Path(value): Path<u32>) -> StatusCode {
+async fn set_tablet_state(State(state): State<Arc<RwLock<Tablet>>>, Path(value): Path<u32>) -> StatusCode {
+    let mut tablet = state.write().await;
+    tablet.state = value == 1;
     StatusCode::OK
 }
 
