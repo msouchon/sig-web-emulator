@@ -13,8 +13,24 @@ use tower_http::{
 use tracing::Level;
 
 #[derive(Default)]
+#[repr(u8)]
+enum JustifyMode {
+    #[default]
+    None = 0,
+    TopLeft = 1,
+    TopRight = 2,
+    BottomLeft = 3,
+    BottomRight = 4,
+    Center = 5,
+}
+
+#[derive(Default)]
 struct Tablet {
+    display_x_size: u32,
+    display_y_size: u32,
+    justify_mode: JustifyMode,
     state: bool,
+    total_points: u32,
 }
 
 #[tokio::main]
@@ -30,6 +46,7 @@ async fn main() {
         .route("/SigWeb/DisplayXSize/{value}", post(set_display_x_size))
         .route("/SigWeb/DisplayYSize/{value}", post(set_display_y_size))
         .route("/SigWeb/JustifyMode/{value}", post(set_justify_mode))
+        .route("/SigWeb/Reset", post(reset))
         .route("/SigWeb/SigWebVersion", get(version))
         .route("/SigWeb/TabletState", get(get_tablet_state))
         .route("/SigWeb/TabletState/{value}", post(set_tablet_state))
@@ -68,15 +85,28 @@ async fn get_days_until_certificate_expires() -> &'static str {
     "0"
 }
 
-async fn set_display_x_size(Path(value): Path<u32>) -> StatusCode {
+async fn set_display_x_size(State(state): State<Arc<RwLock<Tablet>>>, Path(value): Path<u32>) -> StatusCode {
+    let mut tablet = state.write().await;
+    tablet.display_x_size = value;
     StatusCode::OK
 }
 
-async fn set_display_y_size(Path(value): Path<u32>) -> StatusCode {
+async fn set_display_y_size(State(state): State<Arc<RwLock<Tablet>>>, Path(value): Path<u32>) -> StatusCode {
+    let mut tablet = state.write().await;
+    tablet.display_y_size = value;
     StatusCode::OK
 }
 
-async fn set_justify_mode(Path(value): Path<u32>) -> StatusCode {
+async fn set_justify_mode(State(state): State<Arc<RwLock<Tablet>>>, Path(value): Path<u32>) -> StatusCode {
+    let mut tablet = state.write().await;
+    tablet.justify_mode = match value {
+        1 => JustifyMode::TopLeft,
+        2 => JustifyMode::TopRight,
+        3 => JustifyMode::BottomLeft,
+        4 => JustifyMode::BottomRight,
+        5 => JustifyMode::Center,
+        0 | _ => JustifyMode::None,
+    };
     StatusCode::OK
 }
 
@@ -84,6 +114,13 @@ async fn clear_signature() -> StatusCode {
     StatusCode::OK
 }
 
-async fn get_total_points() -> &'static str {
-    "0"
+async fn get_total_points(State(state): State<Arc<RwLock<Tablet>>>) -> String {
+    let tablet = state.read().await;
+    tablet.total_points.to_string()
+}
+
+async fn reset(State(state): State<Arc<RwLock<Tablet>>>) -> StatusCode {
+    let mut tablet = state.write().await;
+    *tablet = Tablet::default();
+    StatusCode::OK
 }
