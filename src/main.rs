@@ -1,4 +1,10 @@
-use std::sync::Arc;
+// Prevent console window in addition to Slint window in Windows release builds when, e.g., starting the app via file manager. Ignored on other platforms.
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
+use std::{
+    error::Error,
+    sync::Arc
+};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -11,6 +17,8 @@ use tower_http::{
     trace::{self, TraceLayer},
 };
 use tracing::Level;
+
+slint::include_modules!();
 
 #[derive(Default)]
 #[repr(u8)]
@@ -34,7 +42,7 @@ struct Tablet {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt::init();
 
     let tablet = Arc::new(RwLock::new(Tablet::default()));
@@ -61,9 +69,19 @@ async fn main() {
             CorsLayer::new().allow_origin(Any)
         );
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    tokio::spawn(async move {
+        let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+        axum::serve(listener, app).await.unwrap();
+    });
 
-    axum::serve(listener, app).await.unwrap()
+    let ui = AppWindow::new()?;
+
+    ui.global::<App>().set_name(slint::SharedString::from(env!("CARGO_PKG_NAME")));
+    ui.global::<App>().set_version(slint::SharedString::from(env!("CARGO_PKG_VERSION")));
+
+    ui.run()?;
+
+    Ok(())
 }
 
 async fn get_tablet_state(State(state): State<Arc<RwLock<Tablet>>>) -> &'static str {
