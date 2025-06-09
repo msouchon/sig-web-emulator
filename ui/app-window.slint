@@ -1,9 +1,7 @@
-import {VerticalBox} from "std-widgets.slint";
+import { App } from "global.slint";
+import { VerticalBox } from "std-widgets.slint";
 
-export global App {
-    in property<string> name: "App Name";
-    in property<string> version: "1.0.0";
-}
+export { App }
 
 export component AppWindow inherits Window {
     title: App.name;
