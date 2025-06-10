@@ -5,14 +5,13 @@ use std::{
     error::Error,
     sync::Arc
 };
-use tokio::sync::RwLock;
+use parking_lot::RwLock;
+use slint::ComponentHandle;
 
 mod app_controller;
 mod server;
 mod tablet;
 mod ui;
-
-slint::include_modules!();
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -28,10 +27,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let app_window = ui::AppWindow::new()?;
 
-    let app_controller = app_controller::AppController {
-        tablet,
-        app_window: app_window,
-    };
+    let app_controller = app_controller::AppController::new(app_window, tablet);
 
     app_controller.app_window.global::<ui::App>().set_name(slint::SharedString::from(env!("CARGO_PKG_NAME")));
     app_controller.app_window.global::<ui::App>().set_version(slint::SharedString::from(env!("CARGO_PKG_VERSION")));

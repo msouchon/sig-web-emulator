@@ -1,10 +1,15 @@
 import { App } from "global.slint";
-import { VerticalBox } from "std-widgets.slint";
+import { Button, Palette, VerticalBox } from "std-widgets.slint";
 
 export { App }
 
 export component AppWindow inherits Window {
     title: App.name;
+
+    in property<image> image <=> image.source;
+
+    pure callback clear();
+    pure callback draw(int, int);
 
     VerticalBox {
         Text {
@@ -13,6 +18,35 @@ export component AppWindow inherits Window {
 
         Text {
             text: "Version: \{App.version}";
+        }
+
+        Button {
+            text: "Clear";
+            clicked => {
+                root.clear();
+            }
+        }
+
+        Rectangle {
+            background: Palette.control-background;
+            border-color: Palette.border;
+            border-radius: 2px;
+            border-width: 2px;
+            height: 100px;
+            width: 500px;
+
+            image:= Image {
+                height: 100%;
+                image-fit: fill;
+                width: 100%;
+            }
+
+            touch_area:= TouchArea {
+                mouse-cursor: crosshair;
+                moved => {
+                    root.draw(touch_area.mouse-x / 1px, touch_area.mouse-y / 1px);
+                }
+            }
         }
     }
 }
