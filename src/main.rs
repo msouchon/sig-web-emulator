@@ -7,8 +7,10 @@ use std::{
 };
 use tokio::sync::RwLock;
 
+mod app_controller;
 mod server;
 mod tablet;
+mod ui;
 
 slint::include_modules!();
 
@@ -16,7 +18,7 @@ slint::include_modules!();
 async fn main() -> Result<(), Box<dyn Error>> {
     let tablet = Arc::new(RwLock::new(tablet::Tablet::default()));
 
-    let server = server::Server::new(tablet);
+    let server = server::Server::new(tablet.clone());
 
     tokio::spawn(async move {
         if let Err(e) = server.run().await {
@@ -24,12 +26,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
         };
     });
 
-    let ui = AppWindow::new()?;
+    let app_window = ui::AppWindow::new()?;
 
-    ui.global::<App>().set_name(slint::SharedString::from(env!("CARGO_PKG_NAME")));
-    ui.global::<App>().set_version(slint::SharedString::from(env!("CARGO_PKG_VERSION")));
+    let app_controller = app_controller::AppController {
+        tablet,
+        app_window: app_window,
+    };
 
-    ui.run()?;
+    app_controller.app_window.global::<ui::App>().set_name(slint::SharedString::from(env!("CARGO_PKG_NAME")));
+    app_controller.app_window.global::<ui::App>().set_version(slint::SharedString::from(env!("CARGO_PKG_VERSION")));
+
+    app_controller.run()?;
 
     Ok(())
 }
