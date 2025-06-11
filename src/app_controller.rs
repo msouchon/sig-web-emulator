@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use parking_lot::RwLock;
 use slint::ComponentHandle;
@@ -46,8 +46,7 @@ impl AppController {
                 let tablet = tablet.clone();
                 let mut tablet = tablet.write();
 
-                let pixel = image::Rgba([color.red(), color.green(), color.blue(), color.alpha()]);
-                tablet.draw(x, y, pixel);
+                tablet.draw(x, y, (color.red(), color.green(), color.blue(), color.alpha()));
 
                 let image = tablet.to_slint_image();
 
