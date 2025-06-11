@@ -1,6 +1,7 @@
 pub struct Tablet {
     pub state: bool,
     image: image::RgbaImage,
+    last_pixel: Option<(i32, i32)>,
 }
 
 impl Tablet {
@@ -11,21 +12,34 @@ impl Tablet {
         Tablet {
             state: false,
             image,
+            last_pixel: None,
         }
     }
 
-    pub fn put_line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, pixel: image::Rgba<u8>) {
-        imageproc::drawing::draw_antialiased_line_segment_mut(
-            &mut self.image,
-            (x1, y1),
-            (x2, y2),
-            pixel,
-            imageproc::pixelops::interpolate
-        );
+    pub fn draw(&mut self, x: i32, y: i32, pixel: image::Rgba<u8>) {
+        if let Some((last_x, last_y)) = self.last_pixel {
+            imageproc::drawing::draw_antialiased_line_segment_mut(
+                &mut self.image,
+                (last_x, last_y),
+                (x, y),
+                pixel,
+                imageproc::pixelops::interpolate
+            );
+        }
+        self.last_pixel = Some((x, y));
+    }
+
+    pub fn draw_end(&mut self) {
+        self.last_pixel = None;
+    }
+
+    pub fn draw_start(&mut self, x: i32, y: i32) {
+        self.last_pixel = Some((x, y));
     }
 
     pub fn clear(&mut self) {
         self.image.fill(255);
+        self.last_pixel = Some((0, 0));
     }
 
     pub fn total_points(&self) -> u32 {
