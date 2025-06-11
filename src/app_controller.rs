@@ -42,11 +42,11 @@ impl AppController {
         {
             let app_window_weak = self.app_window.as_weak();
             let tablet = self.tablet.clone();
-            self.app_window.on_draw(move |x, y, color| {
+            self.app_window.on_draw(move |x, y, color, width| {
                 let tablet = tablet.clone();
                 let mut tablet = tablet.write();
 
-                tablet.draw(x, y, (color.red(), color.green(), color.blue(), color.alpha()));
+                tablet.draw(x, y, (color.red(), color.green(), color.blue(), color.alpha()), width);
 
                 let image = tablet.to_slint_image();
 

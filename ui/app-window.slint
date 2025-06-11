@@ -1,5 +1,5 @@
 import { App } from "global.slint";
-import { Button, HorizontalBox, Palette, VerticalBox } from "std-widgets.slint";
+import { Button, HorizontalBox, Palette, Slider, VerticalBox } from "std-widgets.slint";
 
 export { App }
 
@@ -27,11 +27,12 @@ export component AppWindow inherits Window {
         Colors.darkorchid,
     ];
     property<color> brush-color: brush-colors[0];
+    property<float> brush-width: 3.0;
 
     pure callback clear();
     pure callback draw-end(int, int);
     pure callback draw-start(int, int);
-    pure callback draw(int, int, color);
+    pure callback draw(int, int, color, float);
 
     VerticalBox {
         Text {
@@ -55,6 +56,22 @@ export component AppWindow inherits Window {
                 touch:= TouchArea {
                     clicked => { root.brush-color = parent.background; }
                 }
+            }
+        }
+
+        HorizontalBox {
+            padding: 0;
+
+            Text {
+                text: "Brush Width: \{Math.round(root.brush-width)}";
+            }
+
+            brush-width-slider:= Slider {
+                maximum: 10.0;
+                minimum: 1.0;
+                value: root.brush-width;
+
+                changed(value) => { root.brush-width = self.value }
             }
         }
 
@@ -84,7 +101,7 @@ export component AppWindow inherits Window {
             touch_area:= TouchArea {
                 mouse-cursor: crosshair;
                 moved => {
-                    root.draw(touch_area.mouse-x / 1px, touch_area.mouse-y / 1px, root.brush-color);
+                    root.draw(touch_area.mouse-x / 1px, touch_area.mouse-y / 1px, root.brush-color, root.brush-width);
                 }
                 pointer-event(event) => {
                     if (event.button == PointerEventButton.left) {

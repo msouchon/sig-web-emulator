@@ -16,7 +16,7 @@ impl Tablet {
         }
     }
 
-    pub fn draw(&mut self, x: i32, y: i32, color_rgba: (u8, u8, u8, u8)) {
+    pub fn draw(&mut self, x: i32, y: i32, color_rgba: (u8, u8, u8, u8), width: f32) {
         if let Some((last_x, last_y)) = self.last_pixel {
             use tiny_skia::{
                 LineCap,
@@ -43,7 +43,7 @@ impl Tablet {
             let path = path_builder.finish().unwrap();
 
             let stroke = Stroke {
-                width: 5.0,
+                width,
                 line_cap: LineCap::Round,
                 line_join: LineJoin::Round,
                 ..Default::default()
