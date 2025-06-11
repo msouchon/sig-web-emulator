@@ -7,10 +7,12 @@ export component AppWindow inherits Window {
     title: App.name;
 
     in property<image> image <=> image.source;
-    in property<length> image-width: 500px;
     in property<length> image-height: 100px;
+    in property<length> image-width: 500px;
 
     pure callback clear();
+    pure callback draw-end(int, int);
+    pure callback draw-start(int, int);
     pure callback draw(int, int);
 
     VerticalBox {
@@ -49,6 +51,15 @@ export component AppWindow inherits Window {
                 mouse-cursor: crosshair;
                 moved => {
                     root.draw(touch_area.mouse-x / 1px, touch_area.mouse-y / 1px);
+                }
+                pointer-event(event) => {
+                    if (event.button == PointerEventButton.left) {
+                        if (event.kind == PointerEventKind.down) {
+                            root.draw-start(touch_area.mouse-x / 1px, touch_area.mouse-y / 1px);
+                        } else if (event.kind == PointerEventKind.up) {
+                            root.draw-end(touch_area.mouse-x / 1px, touch_area.mouse-y / 1px);
+                        }
+                    }
                 }
             }
         }

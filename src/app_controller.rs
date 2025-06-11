@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use parking_lot::RwLock;
 use slint::ComponentHandle;
@@ -8,6 +8,7 @@ use crate::{tablet, ui};
 pub struct AppController {
     pub app_window: ui::AppWindow,
     pub tablet: Arc<RwLock<tablet::Tablet>>,
+    last_pixel: Arc<Mutex<Option<(i32, i32)>>>,
 }
 
 impl AppController {
@@ -15,44 +16,78 @@ impl AppController {
         Self {
             app_window,
             tablet,
+            last_pixel: Arc::new(Mutex::new(None)),
         }
     }
 
     pub fn run(self) -> Result <(), slint::PlatformError> {
         self.app_window.set_image(self.tablet.read().to_slint_image());
 
-        let window = self.app_window.as_weak();
-        let tablet = self.tablet.clone();
+        {
+            let app_window_weak = self.app_window.as_weak();
+            let tablet = self.tablet.clone();
+            let last_pixel = self.last_pixel.clone();
+            self.app_window.on_clear(move || {
+                let tablet = tablet.clone();
+                let mut tablet = tablet.write();
 
-        let window_clear = window.clone();
-        let tablet_clear = tablet.clone();
-        self.app_window.on_clear(move || {
-            let window = window_clear.clone();
-            let tablet = tablet_clear.clone();
+                tablet.clear();
 
-            let mut tablet = tablet.write();
-            tablet.clear();
+                let image = tablet.to_slint_image();
 
-            let image = tablet.to_slint_image();
-            if let Some(window) = window.upgrade() {
-                window.set_image(image);
-            }
-        });
+                let app_window_weak = app_window_weak.clone();
+                if let Some(app_window) = app_window_weak.upgrade() {
+                    app_window.set_image(image);
+                }
 
-        let window_draw = window.clone();
-        let tablet_draw = tablet.clone();
-        self.app_window.on_draw(move |x, y| {
-            let window = window_draw.clone();
-            let tablet = tablet_draw.clone();
+                let last_pixel = last_pixel.clone();
+                let mut last_pixel = last_pixel.lock().unwrap();
+                *last_pixel = None;
+            });
+        }
 
-            let mut tablet = tablet.write();
-            tablet.set_pixel(x as u32, y as u32, image::Rgba([255, 0, 0, 255]));
+        {
+            let last_pixel = self.last_pixel.clone();
+            self.app_window.on_draw_end(move |_, _| {
+                let last_pixel = last_pixel.clone();
+                let mut last_pixel = last_pixel.lock().unwrap();
+                *last_pixel = None;
+            });
+        }
 
-            let image = tablet.to_slint_image();
-            if let Some(window) = window.upgrade() {
-                window.set_image(image);
-            }
-        });
+        {
+            let last_pixel = self.last_pixel.clone();
+            self.app_window.on_draw_start(move |x, y| {
+                let last_pixel = last_pixel.clone();
+                let mut last_pixel = last_pixel.lock().unwrap();
+                *last_pixel = Some((x, y));
+            });
+        }
+
+        {
+            let app_window_weak = self.app_window.as_weak();
+            let tablet = self.tablet.clone();
+            let last_pixel = self.last_pixel.clone();
+            self.app_window.on_draw(move |x, y| {
+                let tablet = tablet.clone();
+                let mut tablet = tablet.write();
+                let last_pixel = last_pixel.clone();
+                let mut last_pixel = last_pixel.lock().unwrap();
+
+                if let Some((last_x, last_y)) = *last_pixel {
+                    tablet.put_line(last_x, last_y, x, y, image::Rgba([255, 0, 0, 255]))
+                };
+
+                let image = tablet.to_slint_image();
+
+                let app_window_weak = app_window_weak.clone();
+                if let Some(app_window) = app_window_weak.upgrade() {
+                    app_window.set_image(image);
+                }
+
+                *last_pixel = Some((x, y));
+            });
+        }
 
         self.app_window.run()
     }
