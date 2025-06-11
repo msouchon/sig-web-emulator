@@ -1,5 +1,5 @@
 import { App } from "global.slint";
-import { Button, Palette, VerticalBox } from "std-widgets.slint";
+import { Button, HorizontalBox, Palette, VerticalBox } from "std-widgets.slint";
 
 export { App }
 
@@ -10,10 +10,28 @@ export component AppWindow inherits Window {
     in property<length> image-height: 100px;
     in property<length> image-width: 500px;
 
+    property<[color]> brush-colors: [
+        Colors.black,
+        Colors.gray,
+        Colors.white,
+        Colors.lightpink,
+        Colors.crimson,
+        Colors.orange,
+        Colors.gold,
+        Colors.greenyellow,
+        Colors.forestgreen,
+        Colors.turquoise,
+        Colors.cornflowerblue,
+        Colors.midnightblue,
+        Colors.indigo,
+        Colors.darkorchid,
+    ];
+    property<color> brush-color: brush-colors[0];
+
     pure callback clear();
     pure callback draw-end(int, int);
     pure callback draw-start(int, int);
-    pure callback draw(int, int);
+    pure callback draw(int, int, color);
 
     VerticalBox {
         Text {
@@ -22,6 +40,22 @@ export component AppWindow inherits Window {
 
         Text {
             text: "Version: \{App.version}";
+        }
+
+        HorizontalBox {
+            padding: 0;
+
+            for brush-color in root.brush-colors: Rectangle {
+                background: brush-color;
+                border-color: root.brush-color == brush-color ? Palette.accent-background : Palette.border;
+                border-radius: 2px;
+                border-width: 2px;
+                height: self.width;
+
+                touch:= TouchArea {
+                    clicked => { root.brush-color = parent.background; }
+                }
+            }
         }
 
         Button {
@@ -50,7 +84,7 @@ export component AppWindow inherits Window {
             touch_area:= TouchArea {
                 mouse-cursor: crosshair;
                 moved => {
-                    root.draw(touch_area.mouse-x / 1px, touch_area.mouse-y / 1px);
+                    root.draw(touch_area.mouse-x / 1px, touch_area.mouse-y / 1px, root.brush-color);
                 }
                 pointer-event(event) => {
                     if (event.button == PointerEventButton.left) {

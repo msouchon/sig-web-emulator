@@ -68,14 +68,15 @@ impl AppController {
             let app_window_weak = self.app_window.as_weak();
             let tablet = self.tablet.clone();
             let last_pixel = self.last_pixel.clone();
-            self.app_window.on_draw(move |x, y| {
+            self.app_window.on_draw(move |x, y, color| {
                 let tablet = tablet.clone();
                 let mut tablet = tablet.write();
                 let last_pixel = last_pixel.clone();
                 let mut last_pixel = last_pixel.lock().unwrap();
 
                 if let Some((last_x, last_y)) = *last_pixel {
-                    tablet.put_line(last_x, last_y, x, y, image::Rgba([255, 0, 0, 255]))
+                    let pixel = image::Rgba([color.red(), color.green(), color.blue(), color.alpha()]);
+                    tablet.put_line(last_x, last_y, x, y, pixel)
                 };
 
                 let image = tablet.to_slint_image();
