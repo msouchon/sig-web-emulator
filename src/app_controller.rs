@@ -19,6 +19,8 @@ impl AppController {
     }
 
     pub fn run(self) -> Result <(), slint::PlatformError> {
+        self.app_window.set_image(self.tablet.read().to_slint_image());
+
         let window = self.app_window.as_weak();
         let tablet = self.tablet.clone();
 
@@ -30,7 +32,7 @@ impl AppController {
 
             let mut tablet = tablet.write();
             tablet.clear();
-            
+
             let image = tablet.to_slint_image();
             if let Some(window) = window.upgrade() {
                 window.set_image(image);
@@ -45,7 +47,7 @@ impl AppController {
 
             let mut tablet = tablet.write();
             tablet.set_pixel(x as u32, y as u32, image::Rgba([255, 0, 0, 255]));
-            
+
             let image = tablet.to_slint_image();
             if let Some(window) = window.upgrade() {
                 window.set_image(image);

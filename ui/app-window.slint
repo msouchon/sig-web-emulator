@@ -7,6 +7,8 @@ export component AppWindow inherits Window {
     title: App.name;
 
     in property<image> image <=> image.source;
+    in property<length> image-width: 500px;
+    in property<length> image-height: 100px;
 
     pure callback clear();
     pure callback draw(int, int);
@@ -32,13 +34,15 @@ export component AppWindow inherits Window {
             border-color: Palette.border;
             border-radius: 2px;
             border-width: 2px;
-            height: 100px;
-            width: 500px;
+            height: root.image-height + self.border-width * 2;
+            width: root.image-width + self.border-width * 2;
 
             image:= Image {
-                height: 100%;
+                height: root.image-height;
                 image-fit: fill;
-                width: 100%;
+                width: root.image-width;
+                x: parent.border-width;
+                y: parent.border-width;
             }
 
             touch_area:= TouchArea {

@@ -5,9 +5,12 @@ pub struct Tablet {
 
 impl Tablet {
     pub fn default() -> Self {
+        let mut image = image::RgbaImage::new(500, 100);
+        image.fill(255);
+
         Tablet {
             state: false,
-            image: image::RgbaImage::new(500, 100)
+            image,
         }
     }
 
@@ -18,14 +21,14 @@ impl Tablet {
     }
 
     pub fn clear(&mut self) {
-        self.image.fill(0);
+        self.image.fill(255);
     }
 
     pub fn total_points(&self) -> u32 {
         let mut total_points = 0;
 
         for pixel in self.image.pixels() {
-            if pixel[3] != 0 {
+            if *pixel != image::Rgba([255, 255, 255, 255]) {
                 total_points += 1;
             }
         }
