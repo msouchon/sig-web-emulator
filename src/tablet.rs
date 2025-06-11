@@ -14,16 +14,14 @@ impl Tablet {
         }
     }
 
-    pub fn put_pixel(&mut self, x: i32, y: i32, pixel: image::Rgba<u8>) {
-        if x >= 0 && x < self.image.width() as i32 && y >= 0 && y < self.image.height() as i32 {
-            self.image.put_pixel(x as u32, y as u32, pixel);
-        }
-    }
-
     pub fn put_line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, pixel: image::Rgba<u8>) {
-        for (x, y) in line_drawing::Bresenham::new((x1, y1), (x2, y2)) {
-            self.put_pixel(x, y, pixel);
-        }
+        imageproc::drawing::draw_antialiased_line_segment_mut(
+            &mut self.image,
+            (x1, y1),
+            (x2, y2),
+            pixel,
+            imageproc::pixelops::interpolate
+        );
     }
 
     pub fn clear(&mut self) {
