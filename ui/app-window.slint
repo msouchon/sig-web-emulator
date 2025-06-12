@@ -7,8 +7,6 @@ export component AppWindow inherits Window {
     title: App.name;
 
     in property<image> image <=> image.source;
-    in property<length> image-height: 100px;
-    in property<length> image-width: 500px;
 
     property<[color]> brush-colors: [
         Colors.black,
@@ -30,9 +28,9 @@ export component AppWindow inherits Window {
     property<float> brush-width: 3.0;
 
     pure callback clear();
-    pure callback draw-end(length, length);
-    pure callback draw-start(length, length);
-    pure callback draw(length, length, color, float);
+    pure callback draw-end(float, float);
+    pure callback draw-start(float, float);
+    pure callback draw(float, float, color, float);
 
     VerticalBox {
         Text {
@@ -53,7 +51,7 @@ export component AppWindow inherits Window {
                 border-width: 2px;
                 height: self.width;
 
-                touch:= TouchArea {
+                TouchArea {
                     clicked => { root.brush-color = parent.background; }
                 }
             }
@@ -66,7 +64,7 @@ export component AppWindow inherits Window {
                 text: "Brush Width: \{Math.round(root.brush-width)}";
             }
 
-            brush-width-slider:= Slider {
+            Slider {
                 maximum: 10.0;
                 minimum: 1.0;
                 value: root.brush-width;
@@ -87,28 +85,39 @@ export component AppWindow inherits Window {
             border-color: Palette.border;
             border-radius: 2px;
             border-width: 2px;
-            height: root.image-height + self.border-width * 2;
-            width: root.image-width + self.border-width * 2;
+            preferred-height: 150px;
+            preferred-width: 750px;
 
             image:= Image {
-                height: root.image-height;
+                height: parent.height;
                 image-fit: fill;
-                width: root.image-width;
+                width: parent.width;
                 x: parent.border-width;
                 y: parent.border-width;
             }
 
-            touch_area:= TouchArea {
+            TouchArea {
                 mouse-cursor: crosshair;
                 moved => {
-                    root.draw(touch_area.mouse-x, touch_area.mouse-y, root.brush-color, root.brush-width);
+                    root.draw(
+                        self.mouse-x / self.width,
+                        self.mouse-y / self.height,
+                        root.brush-color,
+                        root.brush-width
+                        );
                 }
                 pointer-event(event) => {
                     if (event.button == PointerEventButton.left) {
                         if (event.kind == PointerEventKind.down) {
-                            root.draw-start(touch_area.mouse-x, touch_area.mouse-y);
+                            root.draw-start(
+                                self.mouse-x / self.width,
+                                self.mouse-y / self.height
+                                );
                         } else if (event.kind == PointerEventKind.up) {
-                            root.draw-end(touch_area.mouse-x, touch_area.mouse-y);
+                            root.draw-end(
+                                self.mouse-x / self.width,
+                                self.mouse-y / self.height
+                                );
                         }
                     }
                 }
