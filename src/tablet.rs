@@ -1,7 +1,7 @@
 pub struct Tablet {
     pub state: bool,
     image: tiny_skia::Pixmap,
-    last_pixel: Option<(i32, i32)>,
+    last_pixel: Option<(f32, f32)>,
 }
 
 impl Tablet {
@@ -16,7 +16,7 @@ impl Tablet {
         }
     }
 
-    pub fn draw(&mut self, x: i32, y: i32, color_rgba: (u8, u8, u8, u8), width: f32) {
+    pub fn draw(&mut self, x: f32, y: f32, color_rgba: (u8, u8, u8, u8), width: f32) {
         if let Some((last_x, last_y)) = self.last_pixel {
             use tiny_skia::{
                 LineCap,
@@ -37,8 +37,8 @@ impl Tablet {
             paint.anti_alias = true;
 
             let mut path_builder = PathBuilder::default();
-            path_builder.move_to(last_x as f32, last_y as f32);
-            path_builder.line_to(x as f32, y as f32);
+            path_builder.move_to(last_x, last_y);
+            path_builder.line_to(x, y);
 
             let path = path_builder.finish().unwrap();
 
@@ -59,13 +59,13 @@ impl Tablet {
         self.last_pixel = None;
     }
 
-    pub fn draw_start(&mut self, x: i32, y: i32) {
+    pub fn draw_start(&mut self, x: f32, y: f32) {
         self.last_pixel = Some((x, y));
     }
 
     pub fn clear(&mut self) {
         self.image.fill(tiny_skia::Color::WHITE);
-        self.last_pixel = Some((0, 0));
+        self.last_pixel = Some((0.0, 0.0));
     }
 
     pub fn total_points(&self) -> u32 {

@@ -30,9 +30,9 @@ export component AppWindow inherits Window {
     property<float> brush-width: 3.0;
 
     pure callback clear();
-    pure callback draw-end(int, int);
-    pure callback draw-start(int, int);
-    pure callback draw(int, int, color, float);
+    pure callback draw-end(length, length);
+    pure callback draw-start(length, length);
+    pure callback draw(length, length, color, float);
 
     VerticalBox {
         Text {
@@ -101,14 +101,14 @@ export component AppWindow inherits Window {
             touch_area:= TouchArea {
                 mouse-cursor: crosshair;
                 moved => {
-                    root.draw(touch_area.mouse-x / 1px, touch_area.mouse-y / 1px, root.brush-color, root.brush-width);
+                    root.draw(touch_area.mouse-x, touch_area.mouse-y, root.brush-color, root.brush-width);
                 }
                 pointer-event(event) => {
                     if (event.button == PointerEventButton.left) {
                         if (event.kind == PointerEventKind.down) {
-                            root.draw-start(touch_area.mouse-x / 1px, touch_area.mouse-y / 1px);
+                            root.draw-start(touch_area.mouse-x, touch_area.mouse-y);
                         } else if (event.kind == PointerEventKind.up) {
-                            root.draw-end(touch_area.mouse-x / 1px, touch_area.mouse-y / 1px);
+                            root.draw-end(touch_area.mouse-x, touch_area.mouse-y);
                         }
                     }
                 }
