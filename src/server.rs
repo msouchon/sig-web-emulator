@@ -1,34 +1,29 @@
-use std::{
-    error::Error,
-    sync::Arc
-};
+use std::{error::Error, sync::Arc};
 
 use axum::{
+    Router,
     body::Body,
     extract::{Path, State},
-    http::{header, StatusCode},
+    http::{StatusCode, header},
     response::{IntoResponse, Response},
     routing::{get, post},
-    Router
 };
 use parking_lot::RwLock;
 use tower_http::{
     cors::{Any, CorsLayer},
-    trace::{self, TraceLayer}
+    trace::{self, TraceLayer},
 };
 use tracing::Level;
 
 use crate::tablet::Tablet;
 
 pub struct Server {
-    tablet: Arc<RwLock<Tablet>>
+    tablet: Arc<RwLock<Tablet>>,
 }
 
 impl Server {
     pub fn new(tablet: Arc<RwLock<Tablet>>) -> Self {
-        Self {
-            tablet
-        }
+        Self { tablet }
     }
 
     pub async fn run(self) -> Result<(), Box<dyn Error>> {
@@ -41,9 +36,12 @@ impl Server {
 
     fn setup_router(&self) -> Router {
         Router::new()
-            .route("/", get(|| async {"Hello, world!"}))
+            .route("/", get(|| async { "Hello, world!" }))
             .route("/SigWeb/ClearSignature", get(clear_signature))
-            .route("/SigWeb/DaysUntilCertificateExpires", get(get_days_until_certificate_expires))
+            .route(
+                "/SigWeb/DaysUntilCertificateExpires",
+                get(get_days_until_certificate_expires),
+            )
             .route("/SigWeb/Reset", post(reset))
             .route("/SigWeb/SigImage/{value}", get(get_image))
             .route("/SigWeb/SigWebVersion", get(version))
@@ -54,20 +52,21 @@ impl Server {
             .layer(
                 TraceLayer::new_for_http()
                     .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
-                    .on_response(trace::DefaultOnResponse::new().level(Level::INFO))
+                    .on_response(trace::DefaultOnResponse::new().level(Level::INFO)),
             )
-            .layer(
-                CorsLayer::new().allow_origin(Any)
-            )
+            .layer(CorsLayer::new().allow_origin(Any))
     }
 }
 
 async fn get_tablet_state(State(state): State<Arc<RwLock<Tablet>>>) -> &'static str {
     let tablet = state.read();
-    if tablet.state {"1"} else {"0"}
+    if tablet.state { "1" } else { "0" }
 }
 
-async fn set_tablet_state(State(state): State<Arc<RwLock<Tablet>>>, Path(value): Path<u32>) -> StatusCode {
+async fn set_tablet_state(
+    State(state): State<Arc<RwLock<Tablet>>>,
+    Path(value): Path<u32>,
+) -> StatusCode {
     let mut tablet = state.write();
     tablet.state = value == 1;
     StatusCode::OK
@@ -104,7 +103,12 @@ async fn get_image(State(state): State<Arc<RwLock<Tablet>>>) -> impl IntoRespons
 
     let bytes = match tablet.to_png() {
         Ok(bytes) => bytes,
-        Err(e) => return Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Error generating image: {}", e))),
+        Err(e) => {
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Error generating image: {}", e),
+            ));
+        }
     };
 
     Ok(Response::builder()

@@ -1,12 +1,9 @@
 // Prevent console window in addition to Slint window in Windows release builds when, e.g., starting the app via file manager. Ignored on other platforms.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::{
-    error::Error,
-    sync::Arc
-};
 use parking_lot::RwLock;
 use slint::ComponentHandle;
+use std::{error::Error, sync::Arc};
 
 mod app_controller;
 mod server;
@@ -29,8 +26,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let app_controller = app_controller::AppController::new(app_window, tablet);
 
-    app_controller.app_window.global::<ui::App>().set_name(slint::SharedString::from(env!("CARGO_PKG_NAME")));
-    app_controller.app_window.global::<ui::App>().set_version(slint::SharedString::from(env!("CARGO_PKG_VERSION")));
+    app_controller
+        .app_window
+        .global::<ui::App>()
+        .set_name(slint::SharedString::from(env!("CARGO_PKG_NAME")));
+    app_controller
+        .app_window
+        .global::<ui::App>()
+        .set_version(slint::SharedString::from(env!("CARGO_PKG_VERSION")));
 
     app_controller.run()?;
 
