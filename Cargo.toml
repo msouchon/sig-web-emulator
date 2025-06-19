@@ -2,6 +2,11 @@
 name = "sig-web-emulator"
 version = "0.1.0"
 edition = "2024"
+description = "A signature pad emulator for Topaz SigWeb"
+readme = "README.md"
+repository = "https://github.com/msouchon/sig-web-emulator"
+license = "MIT"
+
 
 [dependencies]
 axum = "0.8.4"
