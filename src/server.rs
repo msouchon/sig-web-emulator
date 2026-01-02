@@ -47,6 +47,12 @@ impl Server {
             .route("/SigWeb/SigWebVersion", get(version))
             .route("/SigWeb/TabletState", get(get_tablet_state))
             .route("/SigWeb/TabletState/{value}", post(set_tablet_state))
+            .route("/SigWeb/TabletComTest/{value}", post(ok_stub))
+            .route("/SigWeb/JustifyMode/{value}", post(ok_stub))
+            .route("/SigWeb/DisplayXSize/{value}", post(ok_stub))
+            .route("/SigWeb/DisplayYSize/{value}", post(ok_stub))
+            .route("/SigWeb/ImageXSize/{value}", post(ok_stub))
+            .route("/SigWeb/ImageYSize/{value}", post(ok_stub))
             .route("/SigWeb/TotalPoints", get(get_total_points))
             .with_state(self.tablet.clone())
             .layer(
@@ -56,6 +62,10 @@ impl Server {
             )
             .layer(CorsLayer::new().allow_origin(Any))
     }
+}
+
+async fn ok_stub() -> StatusCode {
+    StatusCode::OK
 }
 
 async fn get_tablet_state(State(state): State<Arc<RwLock<Tablet>>>) -> &'static str {
